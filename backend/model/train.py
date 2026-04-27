@@ -132,6 +132,7 @@ def get_generators():
     )
     test_gen = ImageDataGenerator(rescale=1.0 / 255)
 
+    # Thứ tự lớp theo alphabet thư mục: Normal(0), Other(1), Pneumonia(2) — khớp LABELS_THREE trong predict.py
     train_data = train_gen.flow_from_directory(
         f"{DATA_DIR}/train",
         target_size=(IMG_SIZE, IMG_SIZE),

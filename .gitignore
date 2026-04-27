@@ -30,3 +30,7 @@ Thumbs.db
 
 # Outputs
 outputs/
+
+# Local server logs
+backend/.uvicorn.log
+backend/.uvicorn.err

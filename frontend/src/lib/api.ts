@@ -5,13 +5,43 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const API_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS) || 180_000;
 
 export interface PredictResponse {
-  diagnosis: "Normal" | "Pneumonia" | "Other";
+  diagnosis: string;
   confidence: number;
   all_scores: Record<string, number>;
   heatmap: string;
   severity: number;
   recommendation: string;
   demo_mode: boolean;
+}
+
+export interface AgentEvent {
+  step:
+    | "classify"
+    | "uncertainty"
+    | "heatmap"
+    | "knowledge"
+    | "pubmed"
+    | "report"
+    | "fatal";
+  status: "started" | "delta" | "done" | "error";
+  data?: Record<string, any>;
+  message?: string;
+}
+
+export interface PatientContext {
+  age?: number;
+  sex?: "male" | "female" | "other";
+  symptoms?: string;
+  history?: string;
+}
+
+export interface AgentDiagnoseOptions {
+  patient?: PatientContext;
+  use_tta?: boolean;
+  use_uncertainty?: boolean;
+  use_pubmed?: boolean;
+  use_llm?: boolean;
+  signal?: AbortSignal;
 }
 
 export interface HealthResponse {
@@ -90,4 +120,56 @@ export async function predictXray(file: File): Promise<PredictResponse> {
 export async function checkHealth(): Promise<HealthResponse> {
   const { data } = await apiClient.get<HealthResponse>("/health");
   return data;
+}
+
+export async function* streamAgentDiagnose(
+  file: File,
+  opts: AgentDiagnoseOptions = {}
+): AsyncGenerator<AgentEvent, void, unknown> {
+  const form = new FormData();
+  form.append("file", file);
+  if (opts.patient) form.append("patient", JSON.stringify(opts.patient));
+  if (opts.use_tta !== undefined) form.append("use_tta", String(opts.use_tta));
+  if (opts.use_uncertainty !== undefined)
+    form.append("use_uncertainty", String(opts.use_uncertainty));
+  if (opts.use_pubmed !== undefined)
+    form.append("use_pubmed", String(opts.use_pubmed));
+  if (opts.use_llm !== undefined) form.append("use_llm", String(opts.use_llm));
+
+  const resp = await fetch(`${API_URL}/agent/diagnose`, {
+    method: "POST",
+    body: form,
+    signal: opts.signal,
+  });
+
+  if (!resp.ok || !resp.body) {
+    let detail = `HTTP ${resp.status}`;
+    try {
+      const j = await resp.json();
+      if (j?.detail) detail = j.detail;
+    } catch {}
+    throw new Error(detail);
+  }
+
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder("utf-8");
+  let buffer = "";
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const parts = buffer.split("\n\n");
+    buffer = parts.pop() ?? "";
+    for (const part of parts) {
+      const line = part.trim();
+      if (!line.startsWith("data:")) continue;
+      const payload = line.slice(5).trim();
+      if (!payload || payload === "[DONE]") continue;
+      try {
+        yield JSON.parse(payload) as AgentEvent;
+      } catch {
+        // ignore malformed chunk
+      }
+    }
+  }
 }

@@ -1,153 +1,122 @@
-# 🏥 AI X-Ray Diagnosis System
+# AI Chest X-Ray Assistant — Clinical Decision Support Pipeline
 
-> Hệ thống chẩn đoán ảnh X-quang phổi bằng Deep Learning — DenseNet121 + Grad-CAM
+**Hệ trợ lý phân tích X-quang ngực** kết hợp học sâu có giải thích (explainable AI), ước lượng độ tin cậy, và tổng hợp báo cáo dạng *findings / impression / recommendations* — thiết kế cho **hỗ trợ lâm sàng và đào tạo**, không thay thế bác sĩ X-quang hay chẩn đoán cuối cùng.
 
-[![Made by](https://img.shields.io/badge/Made%20by-Vu%20Dai%20Luong-blue)](https://github.com/vudailuong)
-![Tech](https://img.shields.io/badge/Stack-Python%20%7C%20TensorFlow%20%7C%20FastAPI%20%7C%20Next.js-informational)
-![Cost](https://img.shields.io/badge/Cost-0%20VND-success)
-
----
-
-## ✨ Tính năng
-
-- **Phân loại 3 nhóm**: Normal / Pneumonia / Other
-- **Grad-CAM Heatmap**: Highlight chính xác vùng bất thường trên phổi
-- **Confidence Score**: Điểm tin cậy cho từng nhãn chẩn đoán
-- **Demo Mode**: Chạy được ngay không cần model (dùng để test UI)
-- **Responsive**: Giao diện đẹp trên cả mobile và desktop
+[![Repo](https://img.shields.io/badge/GitHub-LuongVu1120%2Fxray-blue)](https://github.com/LuongVu1120/xray)
+![Stack](https://img.shields.io/badge/Stack-TensorFlow%20%7C%20FastAPI%20%7C%20Next.js%20%7C%20LLM-informational)
 
 ---
 
-## 🛠 Tech Stack
+## Bối cảnh lâm sàng và khoa học
 
-| Tầng | Công nghệ |
-|------|-----------|
-| AI/ML | Python, TensorFlow, DenseNet121, Grad-CAM |
-| Backend | FastAPI, OpenCV, Pillow |
-| Frontend | Next.js 14, TypeScript, Tailwind CSS |
-| Deploy | Vercel (frontend) + Railway.app (backend) |
-| Dataset | NIH Chest X-Ray (112,000 ảnh) |
+**Chụp X-quang ngực (chest radiography)** là xét nghiệm hình ảnh tuyến đầu trong nhiều tình huống: nghi viêm phổi, suy tim, tràn dịch/tràn khí màng phổi, sàng lọc trước phẫu thuật, theo dõi bệnh mạn. Ảnh phản ánh chồng lấn cấu trúc (tim, mạch, xương, mô mềm), nên **một tổn thương có thể biểu hiện không đặc hiệu** và **một bệnh nhân có thể mang nhiều bệnh lý đồng thời** — đúng với bản chất bộ dữ liệu công khai **NIH ChestX-ray14** (hơn 100.000 ảnh, nhãn đa mức độ, nhiều nhãn trên cùng một ảnh).
+
+Dự án này mô phỏng quy trình mà các hệ thống *computer-aided detection/diagnosis (CADe/CADx)* hướng tới:
+
+1. **Phân loại / phát hiện** các pattern bất thường trên phim (từ mô hình nhị phân, 3 lớp lâm sàng đơn giản, tới **đa nhãn 14 thể bệnh** theo chuẩn NIH).
+2. **Giải thích vùng quan tâm** bằng **Grad-CAM++** — giúp người đọc hiểu vùng ảnh mà mạng nơ-ron “nhấn mạnh”, hữu ích cho giảng dạy và kiểm tra lý luận của mô hình (không tương đương tiêu chuẩn vàng như chẩn đoán bác sĩ).
+3. **Ước lượng bất định (uncertainty)** qua **MC-Dropout** — khi entropy cao, kết quả nên được xem là “mơ hồ”, phù hợp với thực hành an toàn: **không dựa vào một điểm số duy nhất** mà bỏ qua lâm sàng.
+4. **Tổng hợp báo cáo có cấu trúc** (kèm tra cứu PubMed khi bật) — hỗ trợ diễn đạt, vẫn cần **xác minh bởi người có chuyên môn**.
+
+**Giới hạn y học và đạo đức lâm sàng:** mô hình huấn luyện trên dataset cụ thể (độ phân giải, quần thể, gắn nhãn nhiễu) có thể **không khái quát hóa** sang máy chụp khác, bệnh viện khác, hoặc nhóm bệnh nhân khác. Thiết bị này **không phải thiết bị y tế được cấp phép**; mục đích: nghiên cứu, portfolio, và minh họa pipeline AI trong y tế.
 
 ---
 
-## 🚀 Chạy dự án
+## Tính năng kỹ thuật (tóm tắt)
 
-### Yêu cầu
-- Python 3.10+
-- Node.js 18+
+| Lớp | Nội dung |
+|-----|----------|
+| **Mô hình** | DenseNet121; tự nhận **1 / 2 / 3 / 14 đầu ra** (sigmoid đa nhãn hoặc softmax tùy checkpoint). **TTA** (lật ảnh + crop) khi inference Keras. |
+| **Giải thích** | Grad-CAM và **Grad-CAM++** (định vị tốt hơn trên một số kiến trúc). |
+| **Uncertainty** | MC-Dropout: entropy + độ lệch chuẩn theo lớp. |
+| **Hiệu chỉnh xác suất** | Temperature scaling (tùy chọn, file `saved_model/temperature.json`). |
+| **Agent** | Chuỗi công cụ: phân loại → bất định → heatmap → kiến thức bệnh học tóm tắt → PubMed (NCBI) → báo cáo **LLM streaming** (Groq/OpenAI-compatible) hoặc **template** khi không có API key. |
+| **API** | `POST /predict` (JSON); `POST /agent/diagnose` (**SSE**). |
 
-### 1. Backend
+---
+
+## Cài đặt và chạy
+
+### Backend
 
 ```bash
 cd backend
-python -m venv venv
-source venv/bin/activate       # Windows: venv\Scripts\activate
+python -m venv .venv
+# Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-
-# Copy file env
 cp .env.example .env
-# Mặc định DEMO_MODE=true — không cần model để chạy thử
-
-uvicorn main:app --reload --port 8000
+# Điền MODEL_PATH, ALLOWED_ORIGINS, LLM_API_KEY (tuỳ chọn)
+uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-API sẽ chạy tại: http://localhost:8000
-Docs: http://localhost:8000/docs
+- Swagger: `http://127.0.0.1:8000/docs`
+- **Lưu ý:** file `.env` không commit; chỉ dùng `.env.example` làm mẫu.
 
-### 2. Frontend
+### Frontend
 
 ```bash
 cd frontend
 npm install
-
-# Copy file env
 cp .env.local.example .env.local
-
+# NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 npm run dev
 ```
 
-App sẽ chạy tại: http://localhost:3000
+Mở `http://localhost:3000` — tab **Agent** (pipeline đầy đủ) hoặc **Classifier** (một lần gọi API).
 
 ---
 
-## 🤖 Train Model (cần GPU)
-
-Khuyên dùng **Google Colab** (GPU T4 miễn phí):
-
-1. Mở: https://colab.research.google.com
-2. Upload file `backend/model/train.py`
-3. Tải dataset NIH từ Kaggle: https://www.kaggle.com/datasets/nih-chest-xrays/data
-4. Chạy script → download `xray_model.h5`
-5. Đặt file vào `backend/saved_model/xray_model.h5`
-6. Đổi `DEMO_MODE=false` trong `.env`
-
----
-
-## 📁 Cấu trúc thư mục
-
-```
-xray-ai/
-├── backend/
-│   ├── main.py                 ← FastAPI server
-│   ├── requirements.txt
-│   ├── model/
-│   │   ├── train.py            ← Training script
-│   │   ├── predict.py          ← Inference logic
-│   │   └── gradcam.py          ← Grad-CAM implementation
-│   └── saved_model/            ← Đặt xray_model.h5 ở đây
-├── frontend/
-│   ├── src/
-│   │   ├── app/                ← Next.js App Router
-│   │   ├── components/         ← UI components
-│   │   ├── hooks/              ← Custom hooks
-│   │   └── lib/                ← API client
-│   └── package.json
-└── README.md
-```
-
----
-
-## 📊 Kết quả mô hình
-
-| Chỉ số | Giá trị |
-|--------|---------|
-| Dataset | 1,500 ảnh (500/nhóm) |
-| Accuracy (val) | ~82–87% |
-| Thời gian inference | < 3 giây |
-| Kiến trúc | DenseNet121 + Transfer Learning |
-
----
-
-## 🔗 API Endpoints
+## API chính
 
 | Method | Endpoint | Mô tả |
-|--------|----------|-------|
-| GET | `/` | Thông tin service |
-| GET | `/health` | Kiểm tra trạng thái |
-| POST | `/predict` | Phân tích ảnh X-quang |
+|--------|----------|--------|
+| GET | `/` | Trạng thái dịch vụ, model, LLM |
+| GET | `/health` | Health check |
+| GET | `/agent/tools` | Danh sách tool của agent |
+| POST | `/predict` | Một ảnh → chẩn đoán + heatmap + khuyến nghị (JSON) |
+| POST | `/agent/diagnose` | **SSE** — luồng sự kiện từng bước + báo cáo (stream) |
 
-### Ví dụ gọi API
+Ví dụ agent (terminal):
 
 ```bash
-curl -X POST http://localhost:8000/predict \
-  -F "file=@chest_xray.jpg"
-```
-
-Response:
-```json
-{
-  "diagnosis": "Pneumonia",
-  "confidence": 87.3,
-  "all_scores": { "Normal": 6.1, "Other": 6.6, "Pneumonia": 87.3 },
-  "heatmap": "data:image/jpeg;base64,...",
-  "severity": 74.2,
-  "recommendation": "Phát hiện dấu hiệu nghi ngờ viêm phổi...",
-  "demo_mode": false
-}
+curl -N -X POST http://127.0.0.1:8000/agent/diagnose \
+  -F "file=@chest_xray.jpg" \
+  -F "patient={\"age\":65,\"sex\":\"male\",\"symptoms\":\"ho kéo dài, sốt nhẹ\"}" \
+  -F "use_llm=true"
 ```
 
 ---
 
-## 📝 License
+## Huấn luyện
 
-MIT License — Vu Dai Luong © 2026
+- **Ba nhãn lâm sàng (Normal / Other / Pneumonia):** `backend/model/train.py` + Colab/GPU.
+- **Mười bốn nhãn NIH (multi-label, sigmoid):** `backend/model/train_multilabel.py` — phù hợp bài toán “nhiều bệnh trên một ảnh” như trong thực hành X-quang bận rộn.
+
+Checkpoint đặt trong `backend/saved_model/` (các file `.h5` lớn thường **không** đưa lên Git; dùng Drive/LFS tùy repo).
+
+---
+
+## Cấu trúc thư mục (rút gọn)
+
+```
+backend/
+  main.py                 # FastAPI
+  model/                  # predict, gradcam, uncertainty, calibration, train*
+  agent/                  # orchestrator, tools, llm, pubmed, knowledge
+  scripts/                # export_tflite, smoke tests
+frontend/
+  src/app/page.tsx        # UI Agent + Classifier
+  src/lib/api.ts          # client + SSE
+```
+
+---
+
+## Tác giả & giấy phép
+
+**Vu Dai Luong** — dự án portfolio / nghiên cứu ứng dụng AI trong hình ảnh y tế.
+
+MIT License © 2026
+
+---
+
+*Nếu bạn là nhà nghiên cứu lâm sàng: mọi số liệu hiệu năng trên tập validation cụ thể nên được báo cáo kèm đường cong ROC/PR và hiệu chỉnh trước khi cân nhắc bất kỳ ứng dụng nào ngoài môi trường thử nghiệm.*
