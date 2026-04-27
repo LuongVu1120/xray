@@ -1,6 +1,8 @@
 import axios, { isAxiosError } from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// Render free (cold start + tải model) thường > 30s — tăng timeout; ghi đè: NEXT_PUBLIC_API_TIMEOUT_MS
+const API_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS) || 180_000;
 
 export interface PredictResponse {
   diagnosis: "Normal" | "Pneumonia" | "Other";
@@ -21,7 +23,7 @@ export interface HealthResponse {
 
 export const apiClient = axios.create({
   baseURL: API_URL,
-  timeout: 30_000,
+  timeout: API_TIMEOUT_MS,
 });
 
 function formatPredictError(err: unknown): string {
@@ -42,6 +44,12 @@ function formatPredictError(err: unknown): string {
       const det = (err.response.data as { detail?: string }).detail;
       if (typeof det === "string") return det;
     }
+  }
+  if (isAxiosError(err) && (err.code === "ECONNABORTED" || /timeout/i.test(String(err.message)))) {
+    return (
+      "Hết thời gian chờ API (timeout). Free tier Render có thể “ngủ” 50s+ lần đầu; " +
+      "thử bấm lại sau 1–2 phút hoặc dùng UptimeRobot ping /ping. Nếu vẫn lỗi, tăng NEXT_PUBLIC_API_TIMEOUT_MS trên Vercel."
+    );
   }
   if (isAxiosError(err) && err.message === "Network Error") {
     return (
