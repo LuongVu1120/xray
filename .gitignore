@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+.env
+
+# Model files (tải từ Google Drive khi deploy / local)
+backend/**/*.h5
+backend/**/*.keras
+data/
+
+# Node
+node_modules/
+.next/
+out/
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Outputs
+outputs/

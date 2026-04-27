@@ -1,0 +1,14 @@
+.venv
+venv
+__pycache__
+*.py[cod]
+.pytest_cache
+.mypy_cache
+.git
+.gitignore
+.env
+*.md
+.ruff_cache
+saved_model/*.h5
+saved_model/*.keras
+# Giữ cấu trúc; model tải từ GDRIVE_FILE_ID khi chạy

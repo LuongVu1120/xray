@@ -1,0 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --scan-color: rgba(59, 130, 246, 0.6);
+  }
+  * { box-sizing: border-box; }
+  body {
+    @apply bg-slate-950 text-slate-100 antialiased;
+    font-family: 'DM Sans', sans-serif;
+  }
+  ::selection { @apply bg-brand-600 text-white; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { @apply bg-slate-900; }
+  ::-webkit-scrollbar-thumb { @apply bg-slate-600 rounded-full; }
+}
+
+@layer components {
+  .card {
+    @apply bg-slate-900 border border-slate-800 rounded-2xl;
+  }
+  .badge-normal    { @apply bg-emerald-500/10 text-emerald-400 border border-emerald-500/20; }
+  .badge-pneumonia { @apply bg-red-500/10 text-red-400 border border-red-500/20; }
+  .badge-other     { @apply bg-amber-500/10 text-amber-400 border border-amber-500/20; }
+  .btn-primary {
+    @apply bg-brand-600 hover:bg-brand-500 text-white font-medium
+           px-6 py-3 rounded-xl transition-all duration-200
+           disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+  .label { @apply text-xs font-medium text-slate-500 uppercase tracking-widest; }
+}
+
+/* Scanning animation overlay */
+.scan-line {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--scan-color) 50%,
+    transparent 100%
+  );
+  animation: scan 1.8s linear infinite;
+}
+@keyframes scan {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(200%); }
+}
+
+/* Grid background */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(148,163,184,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148,163,184,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
