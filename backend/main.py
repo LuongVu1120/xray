@@ -50,6 +50,12 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Render free ~512MB RAM: TensorFlow + DenseNet dễ OOM → 502 ở proxy. Bật trên host: TF_LOW_MEMORY=true
+if os.getenv("TF_LOW_MEMORY", "").lower() in ("1", "true", "yes"):
+    tf.config.threading.set_intra_op_parallelism_threads(1)
+    tf.config.threading.set_inter_op_parallelism_threads(1)
+    logger.info("TF_LOW_MEMORY: giảm song song TF để tiết kiệm RAM")
+
 
 def _parse_allowed_origins(raw: str) -> list[str]:
     """

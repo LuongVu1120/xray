@@ -52,9 +52,21 @@ function formatPredictError(err: unknown): string {
     );
   }
   if (isAxiosError(err) && err.message === "Network Error") {
+    const isProdApi =
+      typeof API_URL === "string" &&
+      !API_URL.includes("localhost") &&
+      !API_URL.includes("127.0.0.1");
+    if (isProdApi) {
+      return (
+        "Không kết nối được tới API sau khi chờ (thường gặp trên Render free). " +
+        "Nguyên nhân hay gặp: (1) Backend trả 502 khi hết RAM lúc chạy TensorFlow — mở Render → Logs để xem OOM/killed; " +
+        "thử bật DEMO_MODE=true, dùng model TFLite, hoặc gói có nhiều RAM hơn. " +
+        "(2) Thiếu CORS / sai NEXT_PUBLIC_API_URL — kiểm tra biến trên Vercel trùng URL Render. " +
+        "(3) Server đang cold start — thử lại sau hoặc UptimeRobot ping /ping."
+      );
+    }
     return (
-      "Network Error (thường do CORS): backend phải có ALLOWED_ORIGINS gồm URL frontend " +
-      "(ví dụ http://localhost:3000) — không dùng hai dòng trùng key trong .env. " +
+      "Network Error (thường do CORS): backend cần ALLOWED_ORIGINS khớp URL frontend. " +
       "Hoặc API không chạy / sai NEXT_PUBLIC_API_URL."
     );
   }
