@@ -7,6 +7,24 @@
 
 ---
 
+## Demo ảnh & video
+
+**Chỉ việc thả file** vào [`docs/media/images/`](docs/media/images/) (ảnh) và [`docs/media/videos/`](docs/media/videos/) (video), rồi `git add docs/media` → `commit` → `push`. Chi tiết: **[docs/media/README.md](docs/media/README.md)**.
+
+Nhúng ảnh vào README (copy vào đoạn này sau khi đã thêm file):
+
+```markdown
+![Giao diện AI Agent](docs/media/images/ui-agent.png)
+```
+
+Link video (sau khi có `docs/media/videos/demo.mp4`):
+
+```markdown
+[Video hướng dẫn](docs/media/videos/demo.mp4)
+```
+
+---
+
 ## Bối cảnh lâm sàng và khoa học
 
 **Chụp X-quang ngực (chest radiography)** là xét nghiệm hình ảnh tuyến đầu trong nhiều tình huống: nghi viêm phổi, suy tim, tràn dịch/tràn khí màng phổi, sàng lọc trước phẫu thuật, theo dõi bệnh mạn. Ảnh phản ánh chồng lấn cấu trúc (tim, mạch, xương, mô mềm), nên **một tổn thương có thể biểu hiện không đặc hiệu** và **một bệnh nhân có thể mang nhiều bệnh lý đồng thời** — đúng với bản chất bộ dữ liệu công khai **NIH ChestX-ray14** (hơn 100.000 ảnh, nhãn đa mức độ, nhiều nhãn trên cùng một ảnh).
