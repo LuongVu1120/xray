@@ -9,19 +9,26 @@
 
 ## Demo ảnh & video
 
-**Chỉ việc thả file** vào [`docs/media/images/`](docs/media/images/) (ảnh) và [`docs/media/videos/`](docs/media/videos/) (video), rồi `git add docs/media` → `commit` → `push`. Chi tiết: **[docs/media/README.md](docs/media/README.md)**.
+**Tổng quan giao diện**
 
-Nhúng ảnh vào README (copy vào đoạn này sau khi đã thêm file):
+![Tổng quan ứng dụng AI X-Ray](docs/media/images/demo-hero.png)
 
-```markdown
-![Giao diện AI Agent](docs/media/images/ui-agent.png)
-```
+**Luồng thao tác (screenshots)**
 
-Link video (sau khi có `docs/media/videos/demo.mp4`):
+| Bước 1 | Bước 2 |
+|:------:|:------:|
+| ![Bước 1](docs/media/images/demo-step-1.png) | ![Bước 2](docs/media/images/demo-step-2.png) |
 
-```markdown
-[Video hướng dẫn](docs/media/videos/demo.mp4)
-```
+| Bước 3 | Bước 4 |
+|:------:|:------:|
+| ![Bước 3](docs/media/images/demo-step-3.png) | ![Bước 4](docs/media/images/demo-step-4.png) |
+
+**Video hướng dẫn (screen recording, ~40 MB)**
+
+- [Mở / tải `demo-walkthrough.mp4`](docs/media/videos/demo-walkthrough.mp4)
+- [Xem trực tiếp (raw trên GitHub)](https://github.com/LuongVu1120/xray/raw/main/docs/media/videos/demo-walkthrough.mp4)
+
+Danh sách file và quy ước đặt tên: **[docs/media/README.md](docs/media/README.md)**.
 
 ---
 
